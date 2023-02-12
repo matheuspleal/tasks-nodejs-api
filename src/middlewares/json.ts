@@ -1,8 +1,5 @@
-import { IncomingMessage, ServerResponse } from 'node:http'
-
-export type ClientRequest = IncomingMessage & {
-  body?: any
-}
+import { ServerResponse } from 'node:http'
+import { ClientRequest } from '../http-protocol'
 
 export async function json(request: ClientRequest, response: ServerResponse) {
   const buffers: Buffer[] = []
