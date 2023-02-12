@@ -1,0 +1,20 @@
+{
+  "name": "tasks-nodejs-api",
+  "version": "1.0.0",
+  "description": "A task API, made with native Node server, using knex with SQLite",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matheuspleal5/tasks-nodejs-api.git"
+  },
+  "keywords": [],
+  "author": "Matheus Leal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/matheuspleal5/tasks-nodejs-api/issues"
+  },
+  "homepage": "https://github.com/matheuspleal5/tasks-nodejs-api#readme"
+}
