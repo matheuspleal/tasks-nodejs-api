@@ -1,3 +1,4 @@
+import './database'
 import http, { IncomingMessage, ServerResponse } from 'node:http'
 import { json } from './middlewares/json'
 
