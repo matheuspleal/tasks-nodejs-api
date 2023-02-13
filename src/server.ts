@@ -15,6 +15,8 @@ const server = http.createServer(
     await json(request, response)
     const { method, url } = request
 
+    console.log(request.body)
+
     const route = routes.find(
       (route) => route.method === method && route.path.test(url!),
     )

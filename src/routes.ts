@@ -269,4 +269,14 @@ export const routes: Route[] = [
       })
     },
   },
+  {
+    method: 'POST',
+    path: buildRoutePath('/tasks/import'),
+    handler: async (
+      request: ClientRequest,
+      response: ServerResponse,
+    ): Promise<ServerResponse<IncomingMessage>> => {
+      return response.writeHead(200).end()
+    },
+  },
 ]
