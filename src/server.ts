@@ -26,9 +26,11 @@ const server = http.createServer(
       request.query = query ? extractQueryParams(query) : {}
       return route.handler(request, response)
     }
+
+    return response.writeHead(404).end()
   },
 )
 
 server.listen(3333, () => {
-  console.log('Server running on 3333!')
+  console.log('🐙 Server running on 3333!')
 })

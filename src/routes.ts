@@ -13,6 +13,12 @@ type Task = {
   updated_at: string
 }
 
+type UpdateTask = {
+  id?: string
+  title?: string
+  description?: string
+}
+
 type Route = {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   path: RegExp
@@ -148,6 +154,81 @@ export const routes: Route[] = [
           },
         )
       })
+    },
+  },
+  {
+    method: 'PUT',
+    path: buildRoutePath('/tasks/:id'),
+    handler: async (
+      request: ClientRequest,
+      response: ServerResponse,
+    ): Promise<ServerResponse<IncomingMessage>> => {
+      const { id } = request.params
+
+      const { title, description } = request.body
+
+      if (!title && !description) {
+        return response.writeHead(400).end(
+          JSON.stringify({
+            message:
+              'The title or description parameters are required to update a task.',
+          }),
+        )
+      }
+
+      const foundTask = (await new Promise((resolve, reject) => {
+        database.get(
+          `--sql
+          select id, title, description from tasks where id = ?
+        `,
+          [id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(row)
+          },
+        )
+      })) as UpdateTask
+
+      if (!foundTask.id) {
+        return response.writeHead(400).end(
+          JSON.stringify({
+            message: 'Task id does not exists in database.',
+          }),
+        )
+      }
+
+      const updatedTask: UpdateTask = {
+        id: foundTask.id,
+        title: title ?? foundTask.title,
+        description: description ?? foundTask.description,
+      }
+
+      return new Promise((resolve, reject) => {
+        database.run(
+          `--sql
+          update tasks set title = ?, description = ? where id = ?
+        `,
+          [updatedTask.title, updatedTask.description, updatedTask.id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(response.writeHead(204).end())
+          },
+        )
+      })
+    },
+  },
+  {
+    method: 'DELETE',
+    url: buildRoutePath('/tasks/:id'),
+    handler: async (
+      request: ClientRequest,
+      response: ServerResponse,
+    ): Promise<ServerResponse<IncomingMessage>> => {
+      const { id } = request.params
     },
   },
 ]
