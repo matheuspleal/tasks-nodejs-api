@@ -4,7 +4,7 @@ export function extractQueryParams(query: string): any {
     .split('&')
     .reduce((queryParams: any, param: string) => {
       const [key, value] = param.split('=')
-      queryParams[key] = value
+      queryParams[key] = decodeURI(value)
       return queryParams
     }, {})
 }
