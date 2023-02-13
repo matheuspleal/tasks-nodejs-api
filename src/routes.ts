@@ -13,7 +13,7 @@ type Task = {
   updated_at: string
 }
 
-type UpdateTask = {
+type FoundTask = {
   id?: string
   title?: string
   description?: string
@@ -189,9 +189,9 @@ export const routes: Route[] = [
             resolve(row)
           },
         )
-      })) as UpdateTask
+      })) as FoundTask
 
-      if (!foundTask.id) {
+      if (!foundTask?.id) {
         return response.writeHead(400).end(
           JSON.stringify({
             message: 'Task id does not exists in database.',
@@ -199,7 +199,7 @@ export const routes: Route[] = [
         )
       }
 
-      const updatedTask: UpdateTask = {
+      const updatedTask: FoundTask = {
         id: foundTask.id,
         title: title ?? foundTask.title,
         description: description ?? foundTask.description,
@@ -223,12 +223,50 @@ export const routes: Route[] = [
   },
   {
     method: 'DELETE',
-    url: buildRoutePath('/tasks/:id'),
+    path: buildRoutePath('/tasks/:id'),
     handler: async (
       request: ClientRequest,
       response: ServerResponse,
     ): Promise<ServerResponse<IncomingMessage>> => {
       const { id } = request.params
+
+      const foundTask = (await new Promise((resolve, reject) => {
+        database.get(
+          `--sql
+          select id from tasks where id = ?
+        `,
+          [id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(row)
+          },
+        )
+      })) as FoundTask
+
+      if (!foundTask?.id) {
+        return response.writeHead(400).end(
+          JSON.stringify({
+            message: 'Task id does not exists in database.',
+          }),
+        )
+      }
+
+      return new Promise((resolve, reject) => {
+        database.run(
+          `--sql
+          delete from tasks where id = ?
+        `,
+          [foundTask.id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(response.writeHead(204).end())
+          },
+        )
+      })
     },
   },
 ]
