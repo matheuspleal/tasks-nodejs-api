@@ -3,7 +3,7 @@ import http, { ServerResponse } from 'node:http'
 import { json } from './middlewares/json'
 import { routes } from './routes'
 import { ClientRequest } from './http-protocol'
-import { extractQueryParams } from '../utils/extract-query-params'
+import { extractQueryParams } from './utils/extract-query-params'
 
 export type RouteParams = {
   query?: string
@@ -14,8 +14,6 @@ const server = http.createServer(
   async (request: ClientRequest, response: ServerResponse) => {
     await json(request, response)
     const { method, url } = request
-
-    console.log(request.body)
 
     const route = routes.find(
       (route) => route.method === method && route.path.test(url!),

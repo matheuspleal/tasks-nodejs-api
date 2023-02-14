@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { ServerResponse, IncomingMessage } from 'node:http'
-import { buildRoutePath } from '../utils/build-route-path'
+import { buildRoutePath } from './utils/build-route-path'
 import { database } from './database'
 import { ClientRequest } from './http-protocol'
 
@@ -17,6 +17,19 @@ type FoundTask = {
   id?: string
   title?: string
   description?: string
+  completed_at?: string
+}
+
+type UpdatedTask = {
+  id: string
+  title: string
+  description: string
+  updated_at: string
+}
+
+type CompletedTask = {
+  id: string
+  completed_at: string
 }
 
 type Route = {
@@ -199,18 +212,24 @@ export const routes: Route[] = [
         )
       }
 
-      const updatedTask: FoundTask = {
+      const updatedTask: UpdatedTask = {
         id: foundTask.id,
         title: title ?? foundTask.title,
         description: description ?? foundTask.description,
+        updated_at: new Date().toISOString(),
       }
 
       return new Promise((resolve, reject) => {
         database.run(
           `--sql
-          update tasks set title = ?, description = ? where id = ?
+          update tasks set title = ?, description = ?, updated_at = ? where id = ?
         `,
-          [updatedTask.title, updatedTask.description, updatedTask.id],
+          [
+            updatedTask.title,
+            updatedTask.description,
+            updatedTask.updated_at,
+            updatedTask.id,
+          ],
           (error: Error | null, row: any) => {
             if (error) {
               reject(new Error(error.message))
@@ -270,13 +289,66 @@ export const routes: Route[] = [
     },
   },
   {
-    method: 'POST',
-    path: buildRoutePath('/tasks/import'),
+    method: 'PATCH',
+    path: buildRoutePath('/tasks/:id/complete'),
     handler: async (
       request: ClientRequest,
       response: ServerResponse,
     ): Promise<ServerResponse<IncomingMessage>> => {
-      return response.writeHead(200).end()
+      const { id } = request.params
+
+      const foundTask = (await new Promise((resolve, reject) => {
+        database.get(
+          `--sql
+          select id, completed_at, description from tasks where id = ?
+        `,
+          [id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(row)
+          },
+        )
+      })) as FoundTask
+
+      if (!foundTask?.id) {
+        return response.writeHead(400).end(
+          JSON.stringify({
+            message: 'Task id does not exists in database.',
+          }),
+        )
+      }
+
+      if (foundTask?.completed_at) {
+        return response.writeHead(400).end(
+          JSON.stringify({
+            message: `The task has already been completed in: ${foundTask.completed_at}`,
+          }),
+        )
+      }
+
+      const currentDate = new Date().toISOString()
+
+      const completedTask: CompletedTask = {
+        id,
+        completed_at: currentDate,
+      }
+
+      return new Promise((resolve, reject) => {
+        database.run(
+          `--sql
+          update tasks set completed_at = ? where id = ?
+        `,
+          [completedTask.completed_at, completedTask.id],
+          (error: Error | null, row: any) => {
+            if (error) {
+              reject(new Error(error.message))
+            }
+            resolve(response.writeHead(204).end())
+          },
+        )
+      })
     },
   },
 ]
