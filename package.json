@@ -4,7 +4,8 @@
   "description": "A task API, made with native Node server, using knex with SQLite",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "import:csv": "tsx streams/import-csv-file.ts" 
   },
   "repository": {
     "type": "git",
